@@ -32,6 +32,7 @@ services:
       - "80"
     links:
       - dev
+      - selenium
     extra_hosts: 
       - "tests:127.0.0.1"
     volumes:
@@ -66,7 +67,7 @@ services:
         - "sshd_datadir:/root/.ssh"
 
   devlnd: 
-    image: btcpayserver/bitcoin:0.21.1
+    image: btcpayserver/bitcoin:22.0
     environment:
       BITCOIN_NETWORK: regtest
       BITCOIN_WALLETDIR: "/data/wallets"
@@ -80,8 +81,12 @@ services:
       - postgres
       - customer_lnd
       - merchant_lnd
+  selenium:
+    image: selenium/standalone-chrome:3
+    expose:
+      - "4444"
   nbxplorer:
-    image: nicolasdorier/nbxplorer:2.2.1
+    image: nicolasdorier/nbxplorer:2.2.7
     restart: unless-stopped
     ports:
       - "32838:32838"
@@ -105,7 +110,7 @@ services:
 
   bitcoind:
     restart: unless-stopped
-    image: btcpayserver/bitcoin:0.21.1
+    image: btcpayserver/bitcoin:22.0
     environment:
       BITCOIN_NETWORK: regtest
       BITCOIN_WALLETDIR: "/data/wallets"
@@ -208,7 +213,9 @@ services:
       - bitcoind
 
   postgres:
-    image:  postgres:9.6.5
+    image:  postgres:13.4
+    environment:
+        POSTGRES_HOST_AUTH_METHOD: trust
     ports:
       - "39372:5432"
     expose:

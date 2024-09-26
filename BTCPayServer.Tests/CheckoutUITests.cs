@@ -105,6 +105,28 @@ namespace BTCPayServer.Tests
 
         [Fact(Timeout = TestTimeout)]
         [Trait("Lightning", "Lightning")]
+        public async Task CanSetDefaultPaymentMethod()
+        {
+            using (var s = SeleniumTester.Create())
+            {
+                s.Server.ActivateLightning();
+                await s.StartAsync();
+                s.GoToRegister();
+                s.RegisterNewUser(true);
+                var store = s.CreateNewStore();
+                s.AddLightningNode();
+                s.AddDerivationScheme("BTC");
+
+                var invoiceId = s.CreateInvoice(store.storeName, defaultPaymentMethod: "BTC_LightningLike");
+                s.GoToInvoiceCheckout(invoiceId);
+
+                Assert.Equal("Bitcoin (Lightning) (BTC)", s.Driver.FindElement(By.ClassName("payment__currencies")).Text);
+                s.Driver.Quit();
+            }
+        }
+
+        [Fact(Timeout = TestTimeout)]
+        [Trait("Lightning", "Lightning")]
         public async Task CanUseLightningSatsFeature()
         {
             using (var s = SeleniumTester.Create())
@@ -141,7 +163,7 @@ namespace BTCPayServer.Tests
                 var invoiceId = s.CreateInvoice(store.storeId, 0.001m, "BTC", "a@x.com");
                 var invoice = await s.Server.PayTester.InvoiceRepository.GetInvoice(invoiceId);
                 s.Driver.Navigate()
-                    .GoToUrl(new Uri(s.Server.PayTester.ServerUri, $"tests/index.html?invoice={invoiceId}"));
+                    .GoToUrl(new Uri(s.ServerUri, $"tests/index.html?invoice={invoiceId}"));
                 TestUtils.Eventually(() =>
                 {
                     Assert.True(s.Driver.FindElement(By.Name("btcpay")).Displayed);
@@ -162,7 +184,7 @@ namespace BTCPayServer.Tests
                 closebutton.Click();
                 s.Driver.AssertElementNotFound(By.Name("btcpay"));
                 Assert.Equal(s.Driver.Url,
-                    new Uri(s.Server.PayTester.ServerUri, $"tests/index.html?invoice={invoiceId}").ToString());
+                    new Uri(s.ServerUri, $"tests/index.html?invoice={invoiceId}").ToString());
             }
         }
     }
